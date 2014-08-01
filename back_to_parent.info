@@ -1,0 +1,5 @@
+name = A10 Social media links
+description = This module creates a block with social media links.
+core = 7.x
+version = 1.0
+package = "A10 Views/Panes/Blocks"
