@@ -150,8 +150,8 @@ function back_to_parent_block_save($delta = '', $edit = array()) {
  * Implements hook_preprocess_page().
  */
 function back_to_parent_preprocess_page(&$vars) {
-  $plid_item = back_to_parent_item();
-  if (!empty($plid_item)) {
+  $parent_link_item = back_to_parent_item();
+  if (!empty($parent_link_item)) {
     $attributes = array('attributes' => array('class' => array('back-to-parent', 'link'),),);
     $back_to_parent_link = l($parent_link_item['link_title'], $parent_link_item['link_path'], $attributes);
     $vars['back_to_parent_link'] = $back_to_parent_link;
@@ -162,10 +162,31 @@ function back_to_parent_preprocess_page(&$vars) {
  * Return an array of the current pages closest parent link.
  */
 function back_to_parent_item() {
+  // We need the current active trail of the current page
   $trail = menu_get_active_trail();
-  $current_menu_item = array_pop($trail);
-  $plid = (!empty($current_menu_item)) ? $current_menu_item['plid'] : NULL;
-  $plid_item = ($plid != 0) ? menu_link_load($plid): FALSE;
-  return $plid_item;
 
+  // If a trail exists,
+  // we need the last one (closest parent to the current page).
+  if (isset($trail)) {
+    $current_menu_item = array_pop($trail);
+  } else {
+    $current_menu_item = NULL;
+  }
+
+  // If there is a parent, we need its id.
+  if ((!empty($current_menu_item)) && (isset($current_menu_item['plid']))) {
+    $plid = $current_menu_item['plid'];
+  } else {
+    $plid = NULL;
+  }
+
+  // If there is a parent link id and it does not equal 0,
+  // use it to load the parent menu item array.
+  if ((!empty($plid)) && ($plid != 0)) {
+    $plid_item = menu_link_load($plid);
+  } else {
+    $plid_item = NULL;
+  }
+
+  return $plid_item;
 }
