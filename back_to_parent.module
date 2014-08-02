@@ -13,20 +13,10 @@ function back_to_parent_permission() {
 }
 
 /**
- * Implements hook_menu().
+ * Implements hook_ctools_plugin_directory().
  */
-function back_to_parent_menu() {
-  $items['admin/config/user-interface/back-to-parent'] = array(
-    'title' => t('Back to Parent'),
-    'description' => t('Configure the "Back to Parent" link blocks and settings'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('back_to_parent_settings'),
-    'access arguments' => array('administer btp'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'back_to_parent.admin.inc',
-    'file path' => drupal_get_path('module', 'back_to_parent'),
-  );
-  return $items;
+function back_to_parent_ctools_plugin_directory($module, $plugin) {
+  return 'plugins/' . $plugin;
 }
 
 /**
@@ -42,6 +32,23 @@ function back_to_parent_theme() {
       'template' => 'templates/back_to_parent_block',
     ),
   );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function back_to_parent_menu() {
+  $items['admin/config/user-interface/back-to-parent'] = array(
+    'title' => t('Back to Parent'),
+    'description' => t('Configure the "Back to Parent" link blocks and settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('back_to_parent_settings'),
+    'access arguments' => array('administer btp'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'back_to_parent.admin.inc',
+    'file path' => drupal_get_path('module', 'back_to_parent'),
+  );
+  return $items;
 }
 
 /**
@@ -78,15 +85,24 @@ function back_to_parent_block_view($delta = '') {
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
       case 'back_to_parent_link_' . $i:
-        $block['subject'] = '';
-        // Set block settings, get menu parent item
-        $block['content'] = array(
-          '#theme' => 'back_to_parent_block',
-          '#back_to_parent_link' => back_to_parent_item(),
-        );
-        // Get prefix and suffix set in block config
-        $block['content']['#back_to_parent_link']['btp_prefix'] = variable_get('btp_block' . $i . '_suffix' . $lang);
-        $block['content']['#back_to_parent_link']['btp_suffix'] = variable_get('btp_block' . $i . '_prefix' . $lang);
+        // Before we set the block, we need to determine if there is an actual parent link.
+        $back_to_parent_item = back_to_parent_item();
+        if (isset($back_to_parent_item)) {
+          $block['subject'] = '';
+          // Set block settings, get menu parent item
+          $block['content'] = array(
+            '#theme' => 'back_to_parent_block',
+            '#back_to_parent_link' => $back_to_parent_item,
+          );
+          // Get prefix and suffix set in block config. Makes things easier.
+          $block['content']['#back_to_parent_link']['btp_prefix'] = variable_get('btp_block' . $i . '_suffix' . $lang);
+          $block['content']['#back_to_parent_link']['btp_suffix'] = variable_get('btp_block' . $i . '_prefix' . $lang);
+        }
+        // If no parent link, nullify the block so nothing is rendered.
+        else {
+          $block['subject'] = NULL;
+          $block['content'] = NULL;
+        }
       break;
     }
   }
