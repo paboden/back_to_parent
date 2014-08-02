@@ -33,6 +33,7 @@ function back_to_parent_menu() {
  * Implements hook_theme().
  */
 function back_to_parent_theme() {
+  // Setup the theme function array, declare template file
   return array(
     'back_to_parent_block' => array(
       'variables' => array(
@@ -50,8 +51,10 @@ function back_to_parent_block_info() {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
-  $max_to_display = variable_get('number_of_back_to_parent_blocks' . $lang, 1);
+  // Get the max # of BTP blocks set by user
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
   $blocks = array();
+  // Generate max_to_display # of blocks
   for($i = 1; $i <= $max_to_display; $i++) {
     $blocks['back_to_parent_link_' . $i] = array(
       'info' => t('Back to Parent Link - ' . $i),
@@ -69,29 +72,21 @@ function back_to_parent_block_view($delta = '') {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
-  $max_to_display = variable_get('number_of_back_to_parent_blocks' . $lang, 1);
+  // Get max # of blocks so loop can build different case items
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
   $block = array();
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
       case 'back_to_parent_link_' . $i:
-        $prefix = variable_get('btp_block' . $i . '_prefix' . $lang);
-        $prefix = (!empty($prefix)) ? $prefix . ' ' : '';
-        $suffix = variable_get('btp_block' . $i . '_suffix' . $lang);
-        $suffix = (!empty($suffix)) ? ' ' . $suffix : '';
-
-        $plid_item = back_to_parent_item();
-        if (!empty($plid_item)) {
-          $parent_link = l($prefix . $plid_item['title'] . $suffix, $plid_item['href'], array('attributes' => array('class' => 'back-to-link')));
-          $block['subject'] = '';
-          $block['content'] = array(
-            '#theme' => 'back_to_parent_block',
-            '#back_to_parent_link' => $parent_link,
-          );
-        } else {
-          $parent_link = NULL;
-          $block['subject'] = NULL;
-          $block['content'] = NULL;
-        }
+        $block['subject'] = '';
+        // Set block settings, get menu parent item
+        $block['content'] = array(
+          '#theme' => 'back_to_parent_block',
+          '#back_to_parent_link' => back_to_parent_item(),
+        );
+        // Get prefix and suffix set in block config
+        $block['content']['#back_to_parent_link']['btp_prefix'] = variable_get('btp_block' . $i . '_suffix' . $lang);
+        $block['content']['#back_to_parent_link']['btp_suffix'] = variable_get('btp_block' . $i . '_prefix' . $lang);
       break;
     }
   }
@@ -100,26 +95,36 @@ function back_to_parent_block_view($delta = '') {
 }
 
 /**
- * Implements hook_block_view().
+ * Implements hook_block_configure().
  */
 function back_to_parent_block_configure($delta = '') {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
-  $max_to_display = variable_get('number_of_back_to_parent_blocks' . $lang, 1);
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
   $form = array();
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
+      // Create the block config form settings for each available block
       case 'back_to_parent_link_' . $i:
+        // Prefix to display before the parent item link
         $form['btp_block' . $i . '_prefix' . $lang] = array(
-          '#type' => 'text',
+          '#type' => 'textfield',
           '#title' => t('Link Prefix'),
           '#default_value' => variable_get('btp_block' . $i . '_prefix' . $lang, 'Back to'),
         );
+        // Suffix to display after the parent item link
         $form['btp_block' . $i . '_suffix' . $lang] = array(
-          '#type' => 'text',
-          '#title' => t('Link Prefix'),
+          '#type' => 'textfield',
+          '#title' => t('Link Suffix'),
           '#default_value' => variable_get('btp_block' . $i . '_suffix' . $lang, ''),
+        );
+        // Random config setting, for future development
+        $form['btp_block' . $i . '_argh' . $lang] = array(
+          '#type' => 'select',
+          '#title' => t('Number of recent content items to display'),
+          '#default_value' => 10,
+          '#options' => drupal_map_assoc(array(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30)),
         );
       break;
     }
@@ -129,18 +134,19 @@ function back_to_parent_block_configure($delta = '') {
 }
 
 /**
- * Implements hook_block_view().
+ * Implements hook_block_save().
  */
 function back_to_parent_block_save($delta = '', $edit = array()) {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
-  $max_to_display = variable_get('number_of_back_to_parent_blocks' . $lang, 1);
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
       case 'back_to_parent_link_' . $i:
-        variable_get('btp_block' . $i . '_prefix' . $lang, $edit['btp_block' . $i . '_prefix' . $lang]);
-        variable_get('btp_block' . $i . '_suffix' . $lang, $edit['btp_block' . $i . '_suffix' . $lang]);
+        // Save the options set in the block config
+        variable_set('btp_block' . $i . '_prefix' . $lang, $edit['btp_block' . $i . '_prefix' . $lang]);
+        variable_set('btp_block' . $i . '_suffix' . $lang, $edit['btp_block' . $i . '_suffix' . $lang]);
       break;
     }
   }
