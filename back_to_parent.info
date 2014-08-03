@@ -1,5 +1,6 @@
-name = A10 Social media links
-description = This module creates a block with social media links.
+name = Back to Parent
+description = This module creates a block and panel pane that displays the current pages' parent page.
 core = 7.x
 version = 1.0
-package = "A10 Views/Panes/Blocks"
+package = User interface
+configure = admin/config/user-interface/back-to-parent
