@@ -9,7 +9,7 @@ function back_to_parent_install() {
   $languages = language_list('enabled');
   foreach ($languages as $language) {
     $lang = ($language->language == 'en') ? '' : '_' . $language->language;
-    variable_set('number_of_back_to_parent_blocks' . $lang, 1);
+    variable_set('btp_number_of_back_to_parent_blocks' . $lang, 1);
     variable_set('btp_enable_panel_pane' . $lang, TRUE);
     variable_set('btp_enable_page_variable' . $lang, TRUE);
   }
@@ -24,7 +24,7 @@ function back_to_parent_uninstall() {
   $languages = language_list('enabled');
   foreach ($languages as $language) {
     $lang = ($language->language == 'en') ? '' : '_' . $language->language;
-    variable_del('number_of_back_to_parent_blocks' . $lang, 1);
+    variable_del('btp_number_of_back_to_parent_blocks' . $lang, 1);
     variable_del('btp_enable_panel_pane' . $lang, TRUE);
     variable_del('btp_enable_page_variable' . $lang, TRUE);
   }

@@ -1,12 +1,20 @@
 <?php
+global $language;
+$lang = ($language->language == 'en') ? '' : '_' . $language->language;
+$lang_name = ($language->language == 'en') ? '' : ' - ' . $language->name;
+
 $plugin = array(
   'single' => TRUE,  // Just do this one, it is needed.
-  'title' => t('Back to parent'),  // Title to show up on the pane screen.
+  'title' => t('Back to Parent'),  // Title to show up on the pane screen.
   'description' => t('Back to parent menu item link'), // Description to show up on the pane screen.
   'category' => 'Widgets', // Category to place this pane in.
   'edit form' => 'back_to_parent_pane_edit_form', // A function that will return the settings form for the pane.
   'render callback' => 'back_to_parent_pane_render', // A function that will return the renderable content.
   'admin info' => 'back_to_parent_pane_admin_info', // A function that will return the information displayed on the admin screen (optional).
+  'defaults' => array(
+    'btp_pane_prefix' . $lang => '',
+    'btp_pane_suffix' . $lang => '',
+  )
 );
 
 /**
@@ -26,20 +34,20 @@ function back_to_parent_pane_admin_info($subtype, $conf, $contexts) {
 function back_to_parent_pane_edit_form($form, $form_state) {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
-  $lang_name = ($language->name == 'en') ? '' : ' - ' . $language->name;
+  $lang_name = ($language->language == 'en') ? '' : ' - ' . $language->name;
 
   $conf = $form_state['conf'];
 
   $form['btp_pane_prefix' . $lang] = array(
     '#type' => 'textfield',
     '#title' => t('Link Prefix'),
-    '#default_value' => $conf['btp_pane_prefix' . $lang],
+    '#default_value' => $conf['btp_pane_prefix' . $lang] ? $conf['btp_pane_prefix' . $lang] : '',
   );
   // Suffix to display after the parent item link
   $form['btp_pane_suffix' . $lang] = array(
     '#type' => 'textfield',
     '#title' => t('Link Suffix') . $lang_name,
-    '#default_value' => $conf['btp_pane_suffix' . $lang],
+    '#default_value' => $conf['btp_pane_suffix' . $lang] ? $conf['btp_pane_suffix' . $lang] : '',
   );
 
   return $form;
@@ -62,13 +70,23 @@ function back_to_parent_pane_edit_form_submit($form, $form_state) {
  * Run-time rendering of the back to parent pane (content type)
  */
 function back_to_parent_pane_render($subtype, $conf, $context = NULL) {
+  global $language;
+  $lang = ($language->language == 'en') ? '' : '_' . $language->language;
+  $lang_name = ($language->language == 'en') ? '' : ' - ' . $language->name;
+
   $block = new stdClass();
   $block->module = 'back_to_parent';
   $block->title = '';
 
-  $parent_item = back_to_parent_item();
+  $prefix = (!empty($conf['btp_pane_prefix' . $lang])) ? $conf['btp_pane_prefix' . $lang] . ' ' : '';
+  $suffix = (!empty($conf['btp_pane_suffix' . $lang])) ? ' ' . $conf['btp_pane_suffix' . $lang] : '';
+
+  $parent_item = get_parent_link_item();
   if (!empty($parent_item)) {
-    $parent_item_link = l($parent_item['title'], $parent_item['href'], array('attributes' => array('class' => 'back-to-link')));
+    $parent_item_link = l($prefix . $parent_item['title'] . $suffix, $parent_item['href'], array('attributes' => array('class' => 'back-to-link')));
+  }
+  else {
+    $parent_item_link = NULL;
   }
   $content = array(
     '#attributes' => array('class' => array('back-to-parent-link')),
