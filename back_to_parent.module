@@ -25,11 +25,11 @@ function back_to_parent_ctools_plugin_directory($module, $plugin) {
 function back_to_parent_theme() {
   // Setup the theme function array, declare template file
   return array(
-    'back_to_parent_block' => array(
+    'back_to_parent_link' => array(
       'variables' => array(
-        'back_to_parent_link' => NULL,
+        'btp_link_item' => NULL,
       ),
-      'template' => 'templates/back_to_parent_block',
+      'template' => 'templates/back-to-parent-link',
     ),
   );
 }
@@ -87,16 +87,20 @@ function back_to_parent_block_view($delta = '') {
       case 'back_to_parent_link_' . $i:
         // Before we set the block, we need to determine if there is an actual parent link.
         $back_to_parent_item = back_to_parent_item();
-        if (isset($back_to_parent_item)) {
+
+        // Get prefix and suffix set in item array.
+        $btp_prefix = variable_get('btp_block' . $i . '_prefix' . $lang);
+        $btp_suffix = variable_get('btp_block' . $i . '_suffix' . $lang);
+        $back_to_parent_item['btp_prefix'] = $btp_prefix ? $btp_prefix . ' ' : '';
+        $back_to_parent_item['btp_suffix'] = $btp_suffix ? ' ' . $btp_suffix : '';
+
+        if (isset($back_to_parent_item['href'])) {
           $block['subject'] = '';
           // Set block settings, get menu parent item
           $block['content'] = array(
-            '#theme' => 'back_to_parent_block',
-            '#back_to_parent_link' => $back_to_parent_item,
+            '#theme' => 'back_to_parent_link',
+            '#btp_link_item' => $back_to_parent_item,
           );
-          // Get prefix and suffix set in block config. Makes things easier.
-          $block['content']['#back_to_parent_link']['btp_prefix'] = variable_get('btp_block' . $i . '_suffix' . $lang);
-          $block['content']['#back_to_parent_link']['btp_suffix'] = variable_get('btp_block' . $i . '_prefix' . $lang);
         }
         // If no parent link, nullify the block so nothing is rendered.
         else {
@@ -135,13 +139,6 @@ function back_to_parent_block_configure($delta = '') {
           '#title' => t('Link Suffix'),
           '#default_value' => variable_get('btp_block' . $i . '_suffix' . $lang, ''),
         );
-        // Random config setting, for future development
-        $form['btp_block' . $i . '_argh' . $lang] = array(
-          '#type' => 'select',
-          '#title' => t('Number of recent content items to display'),
-          '#default_value' => 10,
-          '#options' => drupal_map_assoc(array(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 30)),
-        );
       break;
     }
   }
@@ -174,9 +171,8 @@ function back_to_parent_block_save($delta = '', $edit = array()) {
 function back_to_parent_preprocess_page(&$vars) {
   $parent_link_item = back_to_parent_item();
   if (!empty($parent_link_item)) {
-    $attributes = array('attributes' => array('class' => array('back-to-parent', 'link'),),);
-    $back_to_parent_link = l($parent_link_item['link_title'], $parent_link_item['link_path'], $attributes);
-    $vars['back_to_parent_link'] = $back_to_parent_link;
+    $back_to_parent_item = l($parent_link_item['link_title'], $parent_link_item['link_path'], $parent_link_item['localized_options']);
+    $vars['btp_link_item'] = $back_to_parent_item;
   }
 }
 

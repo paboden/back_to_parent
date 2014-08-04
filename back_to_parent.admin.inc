@@ -17,7 +17,7 @@ function back_to_parent_settings($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Number of available blocks') . $lang_name,
     '#default_value' => $number_of_btp_blocks,
-    '#options' => drupal_map_assoc(range(1, $number_of_btp_blocks)),
+    '#options' => drupal_map_assoc(range(1, 10)),
     '#description' => t('This will enable multiple "Back to Parent" link blocks. Each block has its own configurable settings. '),
   );
 
