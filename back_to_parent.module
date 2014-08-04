@@ -188,14 +188,16 @@ function get_parent_link_item() {
   // we need the last one (that is the current page).
   if (isset($trail)) {
     $current_menu_item = array_pop($trail);
-  } else {
+  }
+  else {
     $current_menu_item = NULL;
   }
 
   // If there is a parent, we need its id.
   if ((!empty($current_menu_item)) && (isset($current_menu_item['plid']))) {
     $plid = $current_menu_item['plid'];
-  } else {
+  }
+  else {
     $plid = NULL;
   }
 
