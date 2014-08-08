@@ -87,6 +87,9 @@ function back_to_parent_block_view($delta = '') {
       case 'back_to_parent_link_' . $i:
         // Before we set the block, we need to determine if there is an actual parent link.
         $back_to_parent_item = get_parent_link_item();
+        $back_to_parent_item['localized_options'] = (isset($back_to_parent_item['localized_options'])) ? $back_to_parent_item['localized_options'] : array();
+        $back_to_parent_item['link_path'] = (isset($back_to_parent_item['link_path'])) ? $back_to_parent_item['link_path'] : '';
+        $back_to_parent_item['link_title'] = (isset($back_to_parent_item['link_title'])) ? $back_to_parent_item['link_title'] : '';
 
         // Get prefix and suffix set in item array.
         $btp_prefix = variable_get('btp_block' . $i . '_prefix' . $lang);
