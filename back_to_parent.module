@@ -16,7 +16,10 @@ function back_to_parent_permission() {
  * Implements hook_ctools_plugin_directory().
  */
 function back_to_parent_ctools_plugin_directory($module, $plugin) {
-  return 'plugins/' . $plugin;
+  $enable_panel_pane = variable_get('btp_enable_panel_pane', TRUE);
+  if (isset($enable_panel_pane)) {
+    return 'plugins/' . $plugin;
+  }
 }
 
 /**
@@ -24,14 +27,22 @@ function back_to_parent_ctools_plugin_directory($module, $plugin) {
  */
 function back_to_parent_theme() {
   // Setup the theme function array, declare template file
-  return array(
-    'back_to_parent_link' => array(
-      'variables' => array(
-        'btp_link_item' => NULL,
-      ),
-      'template' => 'templates/back-to-parent-link',
+  $theme = array();
+  // Setup the theme information for the block
+  $theme['back_to_parent_link'] = array(
+    'variables' => array(
+      'btp_link_item' => NULL,
     ),
+    'path' => drupal_get_path('module', 'back_to_parent') . '/templates',
+    'template' => 'back-to-parent-link',
   );
+  // Setup the theme information for the pane
+  $theme['panels_pane__back_to_parent'] = array(
+    'path' => drupal_get_path('module', 'back_to_parent') . '/plugins/templates',
+    'template' => 'panels-pane--back-to-parent',
+  );
+
+  return $theme;
 }
 
 /**
@@ -59,7 +70,7 @@ function back_to_parent_block_info() {
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
   // Get the max # of BTP blocks set by user
-  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks', 1);
   $blocks = array();
   // Generate max_to_display # of blocks
   for($i = 1; $i <= $max_to_display; $i++) {
@@ -80,7 +91,7 @@ function back_to_parent_block_view($delta = '') {
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
   // Get max # of blocks so loop can build different case items
-  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks', 1);
   $block = array();
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
@@ -124,7 +135,7 @@ function back_to_parent_block_configure($delta = '') {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
-  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks', 1);
   $form = array();
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
@@ -156,7 +167,7 @@ function back_to_parent_block_save($delta = '', $edit = array()) {
   global $language;
   $lang = ($language->language == 'en') ? '' : '_' . $language->language;
 
-  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
+  $max_to_display = variable_get('btp_number_of_back_to_parent_blocks', 1);
   for($i = 1; $i <= $max_to_display; $i++) {
     switch ($delta) {
       case 'back_to_parent_link_' . $i:
@@ -172,11 +183,14 @@ function back_to_parent_block_save($delta = '', $edit = array()) {
  * Implements hook_preprocess_page().
  */
 function back_to_parent_preprocess_page(&$vars) {
-  $parent_link_item = get_parent_link_item();
-  if (!empty($parent_link_item)) {
-    $attributes = (!empty($parent_link_item['localized_options'])) ? $parent_link_item['localized_options'] : $parent_link_item['options'];
-    $back_to_parent_item = l($parent_link_item['link_title'], $parent_link_item['link_path'], array($attributes));
-    $vars['btp_link_item'] = $back_to_parent_item;
+  $enable_page_variable = variable_get('btp_enable_page_variable', TRUE);
+  if (isset($enable_page_variable)) {
+    $parent_link_item = get_parent_link_item();
+    if (!empty($parent_link_item)) {
+      $attributes = (!empty($parent_link_item['localized_options'])) ? $parent_link_item['localized_options'] : $parent_link_item['options'];
+      $back_to_parent_item = l($parent_link_item['link_title'], $parent_link_item['link_path'], array($attributes));
+      $vars['btp_link_item'] = $back_to_parent_item;
+    }
   }
 }
 

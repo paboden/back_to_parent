@@ -22,7 +22,7 @@ $plugin = array(
  */
 function back_to_parent_pane_admin_info($subtype, $conf, $contexts) {
   $block = new stdClass;
-  $block->title = (isset($conf['override_title'])) ? $conf['override_title_text'] : t('Back to Parent link');
+  $block->title = $conf['override_title'] ? $conf['override_title_text'] : '';
   $block->content = t('Creating a link back to the parent of this page. Current page must be in a menu for this to be active.');
 
   return $block;
