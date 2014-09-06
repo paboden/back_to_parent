@@ -38,7 +38,7 @@ function back_to_parent_theme() {
   );
   // Setup the theme information for the pane
   $theme['panels_pane__back_to_parent'] = array(
-    'path' => drupal_get_path('module', 'back_to_parent') . '/plugins/templates',
+    'path' => drupal_get_path('module', 'back_to_parent') . '/templates',
     'template' => 'panels-pane--back-to-parent',
   );
 
@@ -200,32 +200,12 @@ function back_to_parent_preprocess_page(&$vars) {
 function get_parent_link_item() {
   // We need the current active trail of the current page
   $trail = menu_get_active_trail();
-
-  // If a trail exists,
-  // we need the last one (that is the current page).
-  if (isset($trail)) {
-    $current_menu_item = array_pop($trail);
-  }
-  else {
-    $current_menu_item = NULL;
-  }
-
+  // If a trail exists, we need the last one (that is the current page).
+  $current_menu_item = (isset($trail)) ? array_pop($trail) : NULL;
   // If there is a parent, we need its id.
-  if ((!empty($current_menu_item)) && (isset($current_menu_item['plid']))) {
-    $plid = $current_menu_item['plid'];
-  }
-  else {
-    $plid = NULL;
-  }
-
-  // If there is a parent link id and it does not equal 0,
-  // use it to load the parent menu item array.
-  if ((!empty($plid)) && ($plid != 0)) {
-    $plid_item = menu_link_load($plid);
-  }
-  else {
-    $plid_item = NULL;
-  }
+  $plid = ((!empty($current_menu_item)) && (isset($current_menu_item['plid']))) ? $current_menu_item['plid'] : NULL;
+  // If there is a parent link id and it does not equal 0, use it to load the parent menu item array.
+  $plid_item = ((!empty($plid)) && ($plid != 0)) ? menu_link_load($plid) : NULL;
 
   return $plid_item;
 }
