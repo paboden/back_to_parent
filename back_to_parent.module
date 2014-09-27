@@ -97,7 +97,7 @@ function back_to_parent_block_view($delta = '') {
     switch ($delta) {
       case 'back_to_parent_link_' . $i:
         // Before we set the block, we need to determine if there is an actual parent link.
-        $back_to_parent_item = get_parent_link_item();
+        $back_to_parent_item = btp_get_parent_link_item();
         $back_to_parent_item['localized_options'] = (isset($back_to_parent_item['localized_options'])) ? $back_to_parent_item['localized_options'] : array();
         $back_to_parent_item['link_path'] = (isset($back_to_parent_item['link_path'])) ? $back_to_parent_item['link_path'] : '';
         $back_to_parent_item['link_title'] = (isset($back_to_parent_item['link_title'])) ? $back_to_parent_item['link_title'] : '';
@@ -185,7 +185,7 @@ function back_to_parent_block_save($delta = '', $edit = array()) {
 function back_to_parent_preprocess_page(&$vars) {
   $enable_page_variable = variable_get('btp_enable_page_variable', TRUE);
   if (isset($enable_page_variable)) {
-    $parent_link_item = get_parent_link_item();
+    $parent_link_item = btp_get_parent_link_item();
     if (!empty($parent_link_item)) {
       $attributes = (!empty($parent_link_item['localized_options'])) ? $parent_link_item['localized_options'] : $parent_link_item['options'];
       $back_to_parent_item = l($parent_link_item['link_title'], $parent_link_item['link_path'], array($attributes));
@@ -197,7 +197,7 @@ function back_to_parent_preprocess_page(&$vars) {
 /**
  * Return an array of the current pages closest parent link.
  */
-function get_parent_link_item() {
+function btp_get_parent_link_item() {
   // We need the current active trail of the current page
   $trail = menu_get_active_trail();
   // If a trail exists, we need the last one (that is the current page).
@@ -208,4 +208,37 @@ function get_parent_link_item() {
   $plid_item = ((!empty($plid)) && ($plid != 0)) ? menu_link_load($plid) : NULL;
 
   return $plid_item;
+}
+
+/**
+ * Return the node object of the parent menu id.
+ */
+function btp_get_parent_node_item($path) {
+  $path = menu_get_item($path);
+  $node = isset($path['original_map'][1]) ? node_load($path['original_map'][1]) : NULL;
+  if (empty($node)) {
+    return FALSE;
+  }
+  return $node;
+}
+
+/**
+ * Get a list of all enabled views in the system.
+ */
+function btp_get_all_views() {
+  $enabled_views = array();
+  $views = views_get_all_views();
+
+  foreach ($views as $view) {
+    // Skip disabled views.
+    if (!empty($views[$view->name]->disabled)) {
+      continue;
+    }
+    $enabled_views[$view->name] = $view->human_name;
+    $displays = views_get_view($view->name);
+    dpm($displays);
+  }
+
+  ksort($enabled_views);
+  return $enabled_views;
 }

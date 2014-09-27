@@ -14,6 +14,8 @@ $plugin = array(
   'defaults' => array(
     'btp_pane_prefix' . $lang => '',
     'btp_pane_suffix' . $lang => '',
+    'btp_pane_view_mode' . $lang => '',
+    'btp_pane_view_display' . $lang => '',
   )
 );
 
@@ -50,6 +52,43 @@ function back_to_parent_pane_edit_form($form, $form_state) {
     '#default_value' => $conf['btp_pane_suffix' . $lang] ? $conf['btp_pane_suffix' . $lang] : '',
   );
 
+  // Get a list of all view modes, plus a view additional styles
+  $displays = array(
+    'title_as_link' => array(
+      'label' => t('Title as link'),
+      'custom settings' => FALSE,
+    ),
+    'title_no_link' => array(
+      'label' => t('Title, no link'),
+      'custom settings' => FALSE,
+    ),
+    'separate' => array(
+      'label' => t('Separate title and link'),
+      'custom settings' => FALSE,
+    ),
+  );
+  $entity_info = entity_get_info('node');
+  $view_modes = $entity_info['view modes'];
+  $displays = array_merge($displays, $view_modes);
+  foreach($displays as $name => $label) {
+    $displays[$name] = $label['label'];
+  }
+
+  $form['btp_pane_view_mode' . $lang] = array(
+    '#type' => 'select',
+    '#title' => t('Display type'),
+    '#options' => $displays,
+    '#default_value' => $conf['btp_pane_view_mode' . $lang] ? $conf['btp_pane_view_mode' . $lang] : NULL,
+  );
+
+  $views = btp_get_all_views();
+  $form['btp_pane_view_display' . $lang] = array(
+    '#type' => 'select',
+    '#title' => t('View displays to use'),
+    '#options' => $views,
+    '#default_value' => $conf['btp_pane_view_display' . $lang] ? $conf['btp_pane_view_display' . $lang] : NULL,
+  );
+
   return $form;
 }
 
@@ -78,21 +117,34 @@ function back_to_parent_pane_render($subtype, $conf, $context = NULL) {
   $block->module = 'back_to_parent';
   $block->title = '';
 
+  $view_mode = (isset($conf['btp_pane_view_mode' . $lang])) ? $conf['btp_pane_view_mode' . $lang] : 'title_as_link';
   $prefix = (!empty($conf['btp_pane_prefix' . $lang])) ? $conf['btp_pane_prefix' . $lang] . ' ' : '';
   $suffix = (!empty($conf['btp_pane_suffix' . $lang])) ? ' ' . $conf['btp_pane_suffix' . $lang] : '';
 
-  $parent_item = get_parent_link_item();
+  $parent_item = btp_get_parent_link_item();
   if (!empty($parent_item)) {
-    $parent_item_link = l($prefix . $parent_item['title'] . $suffix, $parent_item['href'], array('attributes' => array('class' => 'back-to-link')));
+
+    $node = btp_get_parent_node_item($parent_item['link_path']);
+    if (($view_mode != 'title_as_link') && ($view_mode != 'title_no_link') && ($view_mode != 'separate')) {
+      $parent_item = node_view($node, $view_mode = $view_mode, $langcode = NULL);
+      $parent_item = drupal_render($parent_item);
+    }
+    elseif ($view_mode == 'title_no_link') {
+      $parent_item = $prefix . $parent_item['title'] . $suffix . ' no-link';
+    }
+    elseif ($view_mode == 'separate') {
+      $parent_item = t('Title: ') . $parent_item['title'] . '<br/>' . t('URL: ') . l($parent_item['href'], $parent_item['href'], array('attributes' => array('class' => 'back-to-link-separate')));
+    }
+    else {
+      $parent_item = l($prefix . $parent_item['title'] . $suffix, $parent_item['href'], array('attributes' => array('class' => 'back-to-link-else')));
+    }
+    $block->content = array(
+      '#markup' => $parent_item,
+    );
   }
   else {
-    $parent_item_link = NULL;
+    $block = NULL;
   }
-  $content = array(
-    '#attributes' => array('class' => array('back-to-parent-link')),
-    '#markup' => $parent_item_link,
-  );
-  $block->content = $content;
 
   return $block;
 }
