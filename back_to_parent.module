@@ -97,24 +97,50 @@ function back_to_parent_block_view($delta = '') {
     switch ($delta) {
       case 'back_to_parent_link_' . $i:
         // Before we set the block, we need to determine if there is an actual parent link.
-        $back_to_parent_item = btp_get_parent_link_item();
-        $back_to_parent_item['localized_options'] = (isset($back_to_parent_item['localized_options'])) ? $back_to_parent_item['localized_options'] : array();
-        $back_to_parent_item['link_path'] = (isset($back_to_parent_item['link_path'])) ? $back_to_parent_item['link_path'] : '';
-        $back_to_parent_item['link_title'] = (isset($back_to_parent_item['link_title'])) ? $back_to_parent_item['link_title'] : '';
+        $btp_item = btp_get_parent_link_item();
+        $view_mode = variable_get('btp_block' . $i . '_view_mode' . $lang);
+        $prefix = variable_get('btp_block' . $i . '_prefix' . $lang);
+        $suffix = variable_get('btp_block' . $i . '_suffix' . $lang);
 
-        // Get prefix and suffix set in item array.
-        $btp_prefix = variable_get('btp_block' . $i . '_prefix' . $lang);
-        $btp_suffix = variable_get('btp_block' . $i . '_suffix' . $lang);
-        $back_to_parent_item['btp_prefix'] = $btp_prefix ? $btp_prefix . ' ' : '';
-        $back_to_parent_item['btp_suffix'] = $btp_suffix ? ' ' . $btp_suffix : '';
+        if (!empty($btp_item) && $btp_item['href']) {
 
-        if (isset($back_to_parent_item['href'])) {
-          $block['subject'] = '';
-          // Set block settings, get menu parent item
-          $block['content'] = array(
-            '#theme' => 'back_to_parent_link',
-            '#btp_link_item' => $back_to_parent_item,
-          );
+          if ($node = btp_get_parent_node_item($btp_item['link_path'])) {
+            if (isset($node) && ($view_mode != 'title_as_link') && ($view_mode != 'title_no_link') && ($view_mode != 'separate')) {
+            $node = node_view($node, $view_mode = $view_mode, $langcode = NULL);
+            $block['subject'] = '';
+            $block['content'] = drupal_render($node);
+            }
+            elseif ($view_mode == 'title_no_link') {
+              $block['subject'] = '';
+              $block['content'] = $prefix . $btp_item['title'] . $suffix . ' no-link';
+            }
+            elseif ($view_mode == 'separate') {
+              $block['subject'] = '';
+              $block['content'] =  t('Title: ') . $btp_item['title'] . '<br/>' . t('URL: ') . l($btp_item['href'], $btp_item['href'], array('attributes' => array('class' => 'back-to-link-separate')));
+            }
+            else {
+              $block['subject'] = '';
+              $block['content'] = l($prefix . $btp_item['title'] . $suffix, $btp_item['href'], array('attributes' => array('class' => 'back-to-link-else')));
+            }
+          }
+          else {
+            $btp_item['localized_options'] = (isset($btp_item['localized_options'])) ? $btp_item['localized_options'] : array();
+            $btp_item['link_path'] = (isset($btp_item['link_path'])) ? $btp_item['link_path'] : '';
+            $btp_item['link_title'] = (isset($btp_item['link_title'])) ? $btp_item['link_title'] : '';
+
+            // Get prefix and suffix set in item array.
+            $btp_item['btp_prefix'] = $prefix ? $prefix . ' ' : '';
+            $btp_item['btp_suffix'] = $suffix ? ' ' . $suffix : '';
+
+            if (isset($btp_item['href'])) {
+              $block['subject'] = '';
+              // Set block settings, get menu parent item
+              $block['content'] = array(
+                '#theme' => 'back_to_parent_link',
+                '#btp_link_item' => $btp_item,
+              );
+            }
+          }
         }
         // If no parent link, nullify the block so nothing is rendered.
         else {
@@ -153,6 +179,36 @@ function back_to_parent_block_configure($delta = '') {
           '#title' => t('Link Suffix'),
           '#default_value' => variable_get('btp_block' . $i . '_suffix' . $lang, ''),
         );
+
+        // Get a list of all view modes, plus a view additional styles
+        $displays = array(
+          'title_as_link' => array(
+            'label' => t('Title as link'),
+            'custom settings' => FALSE,
+          ),
+          'title_no_link' => array(
+            'label' => t('Title, no link'),
+            'custom settings' => FALSE,
+          ),
+          'separate' => array(
+            'label' => t('Separate title and link'),
+            'custom settings' => FALSE,
+          ),
+        );
+        $entity_info = entity_get_info('node');
+        $view_modes = $entity_info['view modes'];
+        $displays = array_merge($displays, $view_modes);
+        foreach($displays as $name => $label) {
+          $displays[$name] = $label['label'];
+        }
+
+        $form['btp_block' . $i . '_view_mode' . $lang] = array(
+          '#type' => 'select',
+          '#title' => t('Display type'),
+          '#options' => $displays,
+          '#default_value' => variable_get('btp_block' . $i . '_view_mode' . $lang, ''),
+        );
+
       break;
     }
   }
@@ -174,6 +230,7 @@ function back_to_parent_block_save($delta = '', $edit = array()) {
         // Save the options set in the block config
         variable_set('btp_block' . $i . '_prefix' . $lang, $edit['btp_block' . $i . '_prefix' . $lang]);
         variable_set('btp_block' . $i . '_suffix' . $lang, $edit['btp_block' . $i . '_suffix' . $lang]);
+        variable_set('btp_block' . $i . '_view_mode' . $lang, $edit['btp_block' . $i . '_view_mode' . $lang]);
       break;
     }
   }
@@ -189,7 +246,7 @@ function back_to_parent_preprocess_page(&$vars) {
     if (!empty($parent_link_item)) {
       $attributes = (!empty($parent_link_item['localized_options'])) ? $parent_link_item['localized_options'] : $parent_link_item['options'];
       $back_to_parent_item = l($parent_link_item['link_title'], $parent_link_item['link_path'], array($attributes));
-      $vars['btp_link_item'] = $back_to_parent_item;
+      $vars['btp_link'] = $back_to_parent_item;
     }
   }
 }
@@ -220,25 +277,4 @@ function btp_get_parent_node_item($path) {
     return FALSE;
   }
   return $node;
-}
-
-/**
- * Get a list of all enabled views in the system.
- */
-function btp_get_all_views() {
-  $enabled_views = array();
-  $views = views_get_all_views();
-
-  foreach ($views as $view) {
-    // Skip disabled views.
-    if (!empty($views[$view->name]->disabled)) {
-      continue;
-    }
-    $enabled_views[$view->name] = $view->human_name;
-    $displays = views_get_view($view->name);
-    dpm($displays);
-  }
-
-  ksort($enabled_views);
-  return $enabled_views;
 }

@@ -81,14 +81,6 @@ function back_to_parent_pane_edit_form($form, $form_state) {
     '#default_value' => $conf['btp_pane_view_mode' . $lang] ? $conf['btp_pane_view_mode' . $lang] : NULL,
   );
 
-  $views = btp_get_all_views();
-  $form['btp_pane_view_display' . $lang] = array(
-    '#type' => 'select',
-    '#title' => t('View displays to use'),
-    '#options' => $views,
-    '#default_value' => $conf['btp_pane_view_display' . $lang] ? $conf['btp_pane_view_display' . $lang] : NULL,
-  );
-
   return $form;
 }
 
@@ -123,10 +115,9 @@ function back_to_parent_pane_render($subtype, $conf, $context = NULL) {
 
   $parent_item = btp_get_parent_link_item();
   if (!empty($parent_item)) {
-
     $node = btp_get_parent_node_item($parent_item['link_path']);
-    if (($view_mode != 'title_as_link') && ($view_mode != 'title_no_link') && ($view_mode != 'separate')) {
-      $parent_item = node_view($node, $view_mode = $view_mode, $langcode = NULL);
+    if (isset($node) && ($view_mode != 'title_as_link') && ($view_mode != 'title_no_link') && ($view_mode != 'separate')) {
+      $parent_item = node_view($node, $view_mode, $langcode = NULL);
       $parent_item = drupal_render($parent_item);
     }
     elseif ($view_mode == 'title_no_link') {
