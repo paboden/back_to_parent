@@ -22,10 +22,19 @@ function back_to_parent_install() {
  */
 function back_to_parent_uninstall() {
   $languages = language_list('enabled');
+
   foreach ($languages as $language) {
     $lang = ($language->language == 'en') ? '' : '_' . $language->language;
-    variable_del('btp_number_of_back_to_parent_blocks' . $lang, 1);
-    variable_del('btp_enable_panel_pane' . $lang, TRUE);
-    variable_del('btp_enable_page_variable' . $lang, TRUE);
+    $num = variable_get('btp_number_of_back_to_parent_blocks' . $lang, 1);
+    for($i = 1; $i <= $num; $i++) {
+      variable_del('btp_block' . $i . '_view_mode' . $lang);
+    }
+  }
+
+  foreach ($languages as $language) {
+    $lang = ($language->language == 'en') ? '' : '_' . $language->language;
+    variable_del('btp_number_of_back_to_parent_blocks' . $lang);
+    variable_del('btp_enable_panel_pane' . $lang);
+    variable_del('btp_enable_page_variable' . $lang);
   }
 }
